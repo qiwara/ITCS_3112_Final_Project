@@ -1,4 +1,4 @@
-namespace ITCS_3112_FinalProject.Domain;
+namespace FinalProject.Domain;
 
 public class User
 {

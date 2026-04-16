@@ -1,6 +1,6 @@
-using ITCS_3112_FinalProject.Contracts;
+using FinalProject.Contracts;
 
-namespace ITCS_3112_FinalProject.Repositories;
+namespace FinalProject.Repositories;
 
 public class RoomRepo : IRoomRepo
 {

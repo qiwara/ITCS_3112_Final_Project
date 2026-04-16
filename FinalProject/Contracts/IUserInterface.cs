@@ -1,6 +1,6 @@
 namespace FinalProject.Contracts;
 
-public interface IBookingRepo
+public interface IUserInterface
 {
     
 }

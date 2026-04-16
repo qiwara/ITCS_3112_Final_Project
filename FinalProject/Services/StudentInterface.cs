@@ -2,7 +2,7 @@ using FinalProject.Contracts;
 
 namespace FinalProject.Services;
 
-public class RoomService : IRoomService
+public class StudentInterface : IUserInterface
 {
     
 }

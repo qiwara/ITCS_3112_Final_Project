@@ -2,7 +2,7 @@ using FinalProject.Contracts;
 
 namespace FinalProject.Repositories;
 
-public class RecordRepo : IRecordRepo
+public class UserRepo : IUserRepo
 {
     
 }

@@ -1,4 +1,4 @@
-namespace ITCS_3112_FinalProject.Contracts;
+namespace FinalProject.Contracts;
 
 public interface IRecordRepo
 {

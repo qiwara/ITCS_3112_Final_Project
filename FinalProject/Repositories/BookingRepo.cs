@@ -1,6 +1,4 @@
-using ITCS_3112_FinalProject.Contracts;
-
-namespace ITCS_3112_FinalProject.Repositories;
+using FinalProject.Contracts;
 
 public class BookingRepo : IBookingRepo
 {
