@@ -22,7 +22,7 @@ public class BookingRepo : IBookingRepo
         _bookings.Remove(b);
     }
 
-    public List<Booking> GetBookingByRoom(Room r)
+    public List<Booking> GetBookingsByRoom(Room r)
     {
         return _bookings.FindAll(b => b.Room == r);
     }
