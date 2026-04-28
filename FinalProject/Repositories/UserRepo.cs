@@ -8,7 +8,7 @@ public class UserRepo : IUserRepo
 
     public UserRepo()
     {
-        //Empty Constructr
+        //Empty Constructor
     }
     
     public List<User> GetAllUsers()
@@ -18,28 +18,26 @@ public class UserRepo : IUserRepo
 
     public Users GetUserByEmail(string email)
     {
-        List<Users> returnList = new();
         foreach (User user in _users)
         {
             if (user.getEmail().Equals(email))
             {
-                returnList.add(user);
+                return user;
             }
         }
-        reuturn returnList;
+        return null;
     }
 
     public Users GetUserById(string username)
     {
-        List<Users> returnList = new();
         foreach (User user in _users)
         {
             if (user.name.Equals(username))
             {
-                returnList.add(user);
+                return user
             }
         }
-        reuturn returnList;
+        return  null;
     }
 
     public void AddUser(User u)

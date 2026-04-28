@@ -21,4 +21,9 @@ public abstract class User
     {
         return password;
     }
+    
+    public bool checkPassword(String attempt)
+    {
+        return password.Equals(attempt);
+    }
 }
