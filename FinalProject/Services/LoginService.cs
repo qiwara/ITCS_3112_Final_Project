@@ -12,7 +12,7 @@ public class LoginService : ILoginService
         _userRepo = repo;
     }
 
-    public User Login(string email, string pw)
+    public User? Login(string email, string pw)
     {
         User user = _userRepo.GetUserByEmail(email);
         if (user != null && user.checkPassword(pw))

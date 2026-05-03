@@ -17,7 +17,7 @@ public class UserRepo : IUserRepo
         return _users;
     }
 
-    public User GetUserByEmail(string email)
+    public User? GetUserByEmail(string email)
     {
         foreach (User user in _users)
         {
@@ -29,7 +29,7 @@ public class UserRepo : IUserRepo
         return null;
     }
 
-    public User GetUserById(string username)
+    public User? GetUserById(string username)
     {
         foreach (User user in _users)
         {

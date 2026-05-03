@@ -5,6 +5,7 @@ namespace FinalProject.Domain;
 
 public class Booking
 {
+    public string Name { get; set; } = string.Empty;
     public Room Room { get; set; }
     public List<String> Attendees { get; set; }
     public Subject Subject { get; set; }

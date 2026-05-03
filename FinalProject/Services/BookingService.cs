@@ -34,6 +34,6 @@ public class BookingService : IBookingService
 
     public bool IsRoomAvailable(Room r)
     {
-        throw new System.NotImplementedException();
+        return !r.Booked;
     }
 }
