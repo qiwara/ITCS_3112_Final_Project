@@ -2,14 +2,18 @@ namespace FinalProject.Domain;
 
 public struct Record
 {
-    public int BookingId;
-    public int UserId;
-    public DateTime TimeStamp;
+    public int BookingId { get; }
+    public string RoomLocation { get; }
+    public BookingStatus Status;
+    public DateTime? ScheduledTime;
+    public DateTime ArchivedTime;
 
-    public Record(int bookingId, int userId, DateTime timeStamp)
+    public Record(Booking booking)
     {
-        BookingId = bookingId;
-        UserId = userId;
-        TimeStamp = timeStamp;
+        this.BookingId = booking.BookingId;
+        this.RoomLocation = booking.Room.Location;
+        this.Status = booking.Status;
+        this.ScheduledTime = booking.ScheduledTime;
+        this.ArchivedTime = DateTime.Now;
     }
 }

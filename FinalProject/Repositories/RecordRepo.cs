@@ -9,10 +9,10 @@ public class RecordRepo : IRecordRepo
 
     public List<Record> GetAll()
     {
-        return _records;
+        return new List<Record>(_records);
     }
 
-    public List<Record> GetByBooking(int bookingId)
+    public List<Record> GetByBookingId(int bookingId)
     {
         return _records.Where(r => r.BookingId == bookingId).ToList();
     }

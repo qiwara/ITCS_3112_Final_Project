@@ -5,7 +5,7 @@ namespace FinalProject.Services;
 
 public class RecordService : IRecordService
 {
-    private IRecordRepo _recordRepo;
+    private readonly IRecordRepo _recordRepo;
 
     public RecordService(IRecordRepo recordRepo)
     {
@@ -14,16 +14,16 @@ public class RecordService : IRecordService
 
     public List<Record> GetAllRecords()
     {
-        return  _recordRepo.GetAll();
+        return _recordRepo.GetAll();
     }
 
     public List<Record> GetRecordsById(int bookingId)
     {
-        return _recordRepo.GetAll().Where(x => x.BookingId == bookingId).ToList();
+        return _recordRepo.GetByBookingId(bookingId);
     }
 
-    public void AddRecord(Record r)
+    public void ArchiveBooking(Booking b)
     {
-        _recordRepo.Add(r);
+        _recordRepo.Add(new Record(b));
     }
 }

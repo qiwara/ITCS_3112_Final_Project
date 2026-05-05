@@ -6,5 +6,5 @@ public interface IRecordService
 {
     public List<Record> GetAllRecords();
     public List<Record> GetRecordsById(int bookingId);
-    public void AddRecord(Record r);
+    public void ArchiveBooking(Booking booking);
 }

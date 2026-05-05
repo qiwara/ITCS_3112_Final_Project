@@ -5,33 +5,47 @@ namespace FinalProject.Domain;
 
 public class Booking
 {
-    public string Name { get; set; } = string.Empty;
-    public Room Room { get; set; }
-    public List<String> Attendees { get; set; }
-    public Subject Subject { get; set; }
-    public int Minimum { get; set; }
-    public int Maximum { get; set; }
-    public DateTime CreatedTime { get; set; }
-    public DateTime Deadline { get; set; }
+    public string Name { get; }
+    public int BookingId { get; private set; }
+    public Room Room { get; }
+    public List<String> Attendees { get; } = new List<string>();
+    public Subject Subject { get; }
+    public int Minimum { get; }
+    public int Maximum { get; }
+    public DateTime ScheduledTime { get; }
+    public DateTime Deadline { get; }
     public BookingStatus Status { get; set; }
 
     public Booking(
+        string name,
         Room room,
-        List<string> attendeeList,
         Subject subject,
-        int min,
-        int max,
-        DateTime createdTime,
-        DateTime deadline,
-        BookingStatus status)
+        DateTime scheduledTime)
     {
+        // can't schedule a booking in the past
+        if (scheduledTime < DateTime.Now) 
+            throw new ArgumentException("Scheduled time cannot be in the past.");
+        
+        Name = name;
         Room = room;
-        Attendees = attendeeList;
         Subject = subject;
-        Minimum = min;
-        Maximum = max;
-        CreatedTime = createdTime;
-        Deadline = deadline;
-        Status = status;
+        Minimum = (int)Math.Max(2, room.Capacity * 0.1);
+        Maximum = Room.Capacity;
+        ScheduledTime = scheduledTime;
+        Status = BookingStatus.Pending; 
+        
+        // deadline is whichever comes sooner: 2 days from now OR the meeting
+        if (DateTime.Now.AddDays(2) >= scheduledTime)
+        {
+            // Set deadline to the meeting time if less than 2 days until booking
+            Deadline = scheduledTime; 
+        }
+        else
+        {
+            // otherwise, set deadline 2 days before booking
+            Deadline = scheduledTime.AddDays(-2);
+        }
     }
+    
+    public void AssignId(int id) => BookingId = id;
 }

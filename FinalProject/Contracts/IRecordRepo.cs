@@ -5,6 +5,6 @@ namespace FinalProject.Contracts;
 public interface IRecordRepo
 {
     public List<Record> GetAll();
-    public List<Record> GetByBooking(int bookingId);
+    public List<Record> GetByBookingId(int bookingId);
     public void Add(Record r);
 }

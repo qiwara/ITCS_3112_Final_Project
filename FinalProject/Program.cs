@@ -71,26 +71,25 @@ class Program
 
         void Book(Room r, Booking b) { r.Booked = true; r.CurrentBooking = b; _bookingService.AddBooking(b); }
 
-        Book(classroomA, new Booking(classroomA, new List<string> { "alice@school.edu", "bob@school.edu", "carol@school.edu" }, Subject.Mathematics,    8, 25, DateTime.Now.AddDays(-1), DateTime.Now.AddDays(3),  BookingStatus.Available) { Name = "Calc Study Group"       });
-        Book(classroomB, new Booking(classroomB, new List<string> { "dave@school.edu"  },                                                                Subject.History,        5, 18, DateTime.Now.AddDays(-1), DateTime.Now.AddDays(5),  BookingStatus.Available) { Name = "History Review"         });
-        Book(lab1,       new Booking(lab1,        new List<string> { "eve@school.edu", "frank@school.edu", "grace@school.edu", "henry@school.edu" },     Subject.Biology,        4, 20, DateTime.Now,             DateTime.Now.AddDays(4),  BookingStatus.Booked)    { Name = "Bio Lab Practicals"     });
-        Book(lab2,       new Booking(lab2,        new List<string> { "ivan@school.edu", "julia@school.edu" },                                            Subject.ComputerScience,3, 18, DateTime.Now,             DateTime.Now.AddDays(6),  BookingStatus.Available) { Name = "CS Circuits Workshop"   });
-        Book(studyA,     new Booking(studyA,      new List<string> { "karen@school.edu", "leo@school.edu" },                                             Subject.English,        2,  8, DateTime.Now,             DateTime.Now.AddDays(2),  BookingStatus.Booked)    { Name = "Essay Peer Review"      });
-        Book(studyB,     new Booking(studyB,      new List<string> { "mia@school.edu"   },                                                               Subject.Finance,        1,  6, DateTime.Now,             DateTime.Now.AddDays(7),  BookingStatus.Available) { Name = "Finance Flashcards"     });
+        Book(classroomA, new Booking("Calc Study Group",     classroomA, Subject.Mathematics,    DateTime.Now.AddDays(4)));
+        Book(classroomB, new Booking("History Review",       classroomB, Subject.History,        DateTime.Now.AddDays(4)));
+        Book(lab1,       new Booking("Bio Lab Practicals",   lab1,       Subject.Biology,        DateTime.Now.AddDays(4)));
+        Book(lab2,       new Booking("CS Circuits Workshop", lab2,       Subject.ComputerScience,DateTime.Now.AddDays(4)));
+        Book(studyA,     new Booking("Essay Peer Review",    studyA,     Subject.English,        DateTime.Now.AddDays(4)));
+        Book(studyB,     new Booking("Finance Flashcards",   studyB,     Subject.Finance,        DateTime.Now.AddDays(3)));
     }
 
     static void CheckExpiredClassrooms()
     {
         var expired = _bookingService.GetAllBookings()
             .Where(b => b.Room is Classroom
-                     && b.Status == BookingStatus.Available
-                     && DateTime.Now - b.CreatedTime > TimeSpan.FromDays(2)
+                     && DateTime.Now - b.ScheduledTime > TimeSpan.FromDays(2)
                      && b.Attendees.Count < b.Minimum)
             .ToList();
 
         foreach (var booking in expired)
         {
-            booking.Status = BookingStatus.Incomplete;
+            booking.Status = BookingStatus.Expired;
             booking.Room.Booked = false;
             booking.Room.CurrentBooking = null;
             _bookingService.DeleteBooking(booking);
@@ -275,10 +274,7 @@ class Program
         int.TryParse(Console.ReadLine(), out int days);
         DateTime deadline = DateTime.Now.AddDays(days > 0 ? days : 7);
 
-        var booking = new Booking(room, new List<string>(), subject, min, max, DateTime.Now, deadline, BookingStatus.Available)
-        {
-            Name = name
-        };
+        var booking = new Booking(name, room, subject, DateTime.Now);
 
         room.Booked = true;
         room.CurrentBooking = booking;
@@ -296,7 +292,7 @@ class Program
         string filter = Console.ReadLine()?.Trim().ToLower() ?? "all";
 
         var sessions = _bookingService.GetAllBookings()
-            .Where(b => b.Status != BookingStatus.Incomplete)
+            .Where(b => b.Status != BookingStatus.Expired)
             .Where(b => filter == "all" || b.Room.GetType().Name.ToLower() == filter)
             .ToList();
 
@@ -312,7 +308,7 @@ class Program
         {
             Booking b = sessions[i];
             string type = b.Room.GetType().Name;
-            string confirmed = b.Status == BookingStatus.Booked ? " [CONFIRMED]" : "";
+            string confirmed = b.Status == BookingStatus.Confirmed ? " [CONFIRMED]" : "";
             string full = b.Attendees.Count >= b.Maximum ? " [FULL]" : "";
             Console.WriteLine($"  {i + 1}. \"{b.Name}\" — {type} @ {b.Room.Location}");
             Console.WriteLine($"       Subject: {b.Subject} | Attendees: {b.Attendees.Count}/{b.Maximum} (min {b.Minimum}){confirmed}{full}");
@@ -354,8 +350,8 @@ class Program
 
         selected.Attendees.Add(userEmail);
 
-        if (selected.Attendees.Count >= selected.Minimum && selected.Status == BookingStatus.Available)
-            selected.Status = BookingStatus.Booked;
+        if (selected.Attendees.Count >= selected.Minimum && selected.Status == BookingStatus.Pending)
+            selected.Status = BookingStatus.Confirmed;
 
         Console.WriteLine($"\nYou have joined \"{selected.Name}\"! Press any key.");
         Console.ReadKey();
@@ -380,7 +376,7 @@ class Program
 
         foreach (Booking b in mine)
         {
-            string confirmed = b.Status == BookingStatus.Booked ? " [CONFIRMED]" : " [OPEN]";
+            string confirmed = b.Status == BookingStatus.Confirmed ? " [CONFIRMED]" : " [OPEN]";
             Console.WriteLine($"- \"{b.Name}\" — {b.Room.GetType().Name} @ {b.Room.Location}");
             Console.WriteLine($"  Subject: {b.Subject} | Attendees: {b.Attendees.Count}/{b.Maximum}{confirmed}");
             Console.WriteLine($"  Deadline: {b.Deadline:yyyy-MM-dd HH:mm}");
@@ -421,7 +417,7 @@ class Program
         Booking toCancel = sessions[choice - 1];
         toCancel.Room.Booked = false;
         toCancel.Room.CurrentBooking = null;
-        toCancel.Status = BookingStatus.Incomplete;
+        toCancel.Status = BookingStatus.Expired;
         _bookingService.DeleteBooking(toCancel);
 
         Console.WriteLine($"\nSession \"{toCancel.Name}\" cancelled. Press any key.");

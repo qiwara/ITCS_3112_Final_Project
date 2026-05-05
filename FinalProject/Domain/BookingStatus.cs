@@ -2,7 +2,8 @@ namespace FinalProject.Domain;
 
 public enum BookingStatus
 {
-    Available,
-    Booked,
-    Incomplete
+    Confirmed,
+    Pending,
+    Expired,
+    Deleted
 }
