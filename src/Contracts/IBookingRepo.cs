@@ -8,5 +8,5 @@ public interface IBookingRepo
     public List<Booking> GetAll();
     public void Add(Booking b);
     public void Delete(Booking b);
-    public List<Booking> GetBookingsByRoom(Room r);
+    public Booking GetById(int id);
 }

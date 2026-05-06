@@ -5,7 +5,8 @@ using FinalProject.Domain;
 namespace FinalProject.Repositories;
 public class BookingRepo : IBookingRepo
 {
-    private readonly List<Booking> _bookings = [];
+    private readonly List<Booking> _bookings = new List<Booking>();
+    private int _nextId = 1;
 
     public List<Booking> GetAll()
     {
@@ -14,6 +15,8 @@ public class BookingRepo : IBookingRepo
 
     public void Add(Booking b)
     {
+        b.AssignId(_nextId);
+        _nextId++;
         _bookings.Add(b);
     }
 
@@ -22,8 +25,8 @@ public class BookingRepo : IBookingRepo
         _bookings.Remove(b);
     }
 
-    public List<Booking> GetBookingsByRoom(Room r)
+    public Booking? GetById(int id)
     {
-        return _bookings.FindAll(b => b.Room == r);
+        return _bookings.FirstOrDefault(b => b.BookingId == id);
     }
 }

@@ -5,25 +5,25 @@ namespace FinalProject.Repositories;
 
 public class RoomRepo : IRoomRepo
 {
-    private readonly List<Room> roomList = [];
+    private readonly List<Room> _roomList = [];
 
     public List<Room> GetAll()
     {
-        return roomList;
+        return _roomList;
     }
 
     public void AddRoom(Room r)
     {
-        roomList.Add(r);
+        _roomList.Add(r);
     }
 
-    public Room GetById(int id)
+    public Room? GetByLocation(string location)
     {
-        return roomList[id];
+        return _roomList.FirstOrDefault(r => r.Location == location);
     }
 
     public void DeleteRoom(Room r)
     {
-        roomList.Remove(r);
+        _roomList.Remove(r);
     }
 }

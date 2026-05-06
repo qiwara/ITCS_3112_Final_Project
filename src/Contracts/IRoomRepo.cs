@@ -6,6 +6,6 @@ public interface IRoomRepo
 {
     List<Room> GetAll();
     void AddRoom(Room r);
-    Room GetById(int id);
+    Room? GetByLocation(string location);
     void DeleteRoom(Room r);
 }

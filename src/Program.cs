@@ -10,8 +10,10 @@ class Program
     static readonly IUserRepo _userRepo = new UserRepo();
     static readonly IRoomRepo _roomRepo = new RoomRepo();
     static readonly IBookingRepo _bookingRepo = new BookingRepo();
+    static readonly IRecordRepo _recordRepo = new RecordRepo();
     static readonly ILoginService _loginService = new LoginService(_userRepo);
-    static readonly IBookingService _bookingService = new BookingService(_bookingRepo);
+    static readonly IBookingService _bookingService = new BookingService(_bookingRepo, _roomRepo);
+    static readonly IRecordService _recordService = new RecordService(_recordRepo, _bookingRepo);
     static readonly RoomFactory _roomFactory = new RoomFactory();
 
     static void Main(string[] args)
@@ -92,7 +94,7 @@ class Program
             booking.Status = BookingStatus.Expired;
             booking.Room.Booked = false;
             booking.Room.CurrentBooking = null;
-            _bookingService.DeleteBooking(booking);
+            _recordService.ArchiveBooking(booking);
             Console.WriteLine($"[System] Session \"{booking.Name}\" cancelled — minimum attendance not met within 2 days.");
         }
 
@@ -417,8 +419,8 @@ class Program
         Booking toCancel = sessions[choice - 1];
         toCancel.Room.Booked = false;
         toCancel.Room.CurrentBooking = null;
-        toCancel.Status = BookingStatus.Expired;
-        _bookingService.DeleteBooking(toCancel);
+        toCancel.Status = BookingStatus.Cancelled;
+        _recordService.ArchiveBooking(toCancel);
 
         Console.WriteLine($"\nSession \"{toCancel.Name}\" cancelled. Press any key.");
         Console.ReadKey();

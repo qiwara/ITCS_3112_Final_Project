@@ -6,10 +6,12 @@ namespace FinalProject.Services;
 public class RecordService : IRecordService
 {
     private readonly IRecordRepo _recordRepo;
+    private readonly IBookingRepo _bookingRepo;
 
-    public RecordService(IRecordRepo recordRepo)
+    public RecordService(IRecordRepo recordRepo,  IBookingRepo bookingRepo)
     {
         _recordRepo = recordRepo;
+        _bookingRepo = bookingRepo;
     }
 
     public List<Record> GetAllRecords()
@@ -25,5 +27,6 @@ public class RecordService : IRecordService
     public void ArchiveBooking(Booking b)
     {
         _recordRepo.Add(new Record(b));
+        _bookingRepo.Delete(b);
     }
 }
