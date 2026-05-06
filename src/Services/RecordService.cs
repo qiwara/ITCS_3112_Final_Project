@@ -27,6 +27,9 @@ public class RecordService : IRecordService
     public void ArchiveBooking(Booking b)
     {
         if (_recordRepo.GetByBookingId(b.BookingId).HasValue) return;
+        b.Status = BookingStatus.Cancelled;
+        b.Room.Booked = false;
+        b.Room.CurrentBooking = null;
         _recordRepo.Add(new Record(b));
         _bookingRepo.Delete(b);
     }
