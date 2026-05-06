@@ -2,6 +2,7 @@ using FinalProject.Contracts;
 using FinalProject.Domain;
 using FinalProject.Repositories;
 using FinalProject.Services;
+using FinalProject.Services.SearchStrategies;
 
 namespace FinalProject;
 
@@ -164,7 +165,7 @@ class Program
             Console.Clear();
             Console.WriteLine($"=== Admin Menu — {session.CurrentUser.name} ===\n");
             Console.WriteLine("1. Create Session");
-            Console.WriteLine("2. Browse Sessions");
+            Console.WriteLine("2. Search Sessions");
             Console.WriteLine("3. Cancel a Session");
             Console.WriteLine("4. View Rooms");
             Console.WriteLine("5. Add Room");
@@ -174,7 +175,7 @@ class Program
             switch (Console.ReadLine()?.Trim())
             {
                 case "1": CreateSession(session.CurrentUser); break;
-                case "2": BrowseSessions(session.CurrentUser, canJoin: false); break;
+                case "2": SearchSessions(session.CurrentUser, canJoin: false); break;
                 case "3": CancelSession(); break;
                 case "4": ViewRooms(); break;
                 case "5": AddRoom(); break;
@@ -194,7 +195,7 @@ class Program
             CheckExpiredClassrooms();
             Console.Clear();
             Console.WriteLine($"=== Student Menu — {session.CurrentUser.name} ===\n");
-            Console.WriteLine("1. Browse Sessions");
+            Console.WriteLine("1. Search Sessions");
             Console.WriteLine("2. Create Session");
             Console.WriteLine("3. My Sessions");
             Console.WriteLine("4. Sign Out");
@@ -202,7 +203,7 @@ class Program
 
             switch (Console.ReadLine()?.Trim())
             {
-                case "1": BrowseSessions(session.CurrentUser, canJoin: true); break;
+                case "1": SearchSessions(session.CurrentUser, canJoin: true); break;
                 case "2": CreateSession(session.CurrentUser); break;
                 case "3": ViewMyBookings(session.CurrentUser); break;
                 case "4": _loginService.Logout(session); break;
@@ -219,7 +220,13 @@ class Program
         Console.Clear();
         Console.WriteLine("=== Create Session ===\n");
         Console.Write("Session Name: ");
-        string sessionName = Console.ReadLine()?.Trim() ?? "Unnamed Session";
+        string sessionName = Console.ReadLine()?.Trim() ?? "";
+        if (string.IsNullOrWhiteSpace(sessionName))
+        {
+            Console.WriteLine("Session name cannot be empty. Press any key.");
+            Console.ReadKey();
+            return;
+        }
 
         Console.Write("Room Type (classroom/lab/studyroom): ");
         string roomType = Console.ReadLine()?.Trim().ToLower() ?? "";
@@ -265,31 +272,88 @@ class Program
         Subject subject = subjects[subjectIdx - 1];
 
         Console.Write("Session Time (days from now): ");
-        int.TryParse(Console.ReadLine(), out int days);
-        DateTime bookingTime = DateTime.Now.AddDays(days > 0 ? days : 7);
-        
-        _bookingService.AddBooking(_bookingService.CreateBooking(
-            sessionName, room.Location, subject, bookingTime, creator.getEmail()));
+        if (!int.TryParse(Console.ReadLine(), out int days) || days <= 0)
+        {
+            Console.WriteLine("Invalid input. Using default of 7 days.");
+            days = 7;
+        }
+        DateTime bookingTime = DateTime.Now.AddDays(days);
 
-        Console.WriteLine($"\nSession \"{sessionName}\" created successfully! Press any key.");
+        try
+        {
+            Booking booking = _bookingService.CreateBooking(
+                sessionName, room.Location, subject, bookingTime, creator.getEmail());
+            _bookingService.AddBooking(booking);
+            Console.WriteLine($"\nSession \"{sessionName}\" created successfully! Press any key.");
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"\nCould not create session: {e.Message} Press any key.");
+        }
         Console.ReadKey();
     }
 
-    static void BrowseSessions(User user, bool canJoin)
+    static void SearchSessions(User user, bool canJoin)
     {
         Console.Clear();
-        Console.WriteLine("=== Browse Sessions ===\n");
-        Console.Write("Filter by room type (classroom / lab / studyroom / all): ");
-        string filter = Console.ReadLine()?.Trim().ToLower() ?? "all";
+        Console.WriteLine("=== Search Sessions ===\n");
+        Console.WriteLine("Search by:");
+        Console.WriteLine("1. Room type");
+        Console.WriteLine("2. Subject");
+        Console.WriteLine("3. Availability (open sessions)");
+        Console.WriteLine("4. All sessions");
+        Console.Write("\n> ");
 
-        var sessions = _bookingService.GetAllBookings()
+        IBookingSearchStrategy? strategy = null;
+        bool searchAll = false;
+        switch (Console.ReadLine()?.Trim())
+        {
+            case "1":
+                Console.Write("Enter room type (classroom/lab/studyroom): ");
+                string roomType = Console.ReadLine()?.Trim() ?? "";
+                if (string.IsNullOrWhiteSpace(roomType))
+                {
+                    Console.WriteLine("Room type cannot be empty. Press any key.");
+                    Console.ReadKey();
+                    return;
+                }
+                strategy = new RoomSearchStrategy(roomType);
+                break;
+            case "2":
+                var subjects = Enum.GetValues<Subject>();
+                Console.WriteLine("\nSubjects:");
+                for (int i = 0; i < subjects.Length; i++)
+                    Console.WriteLine($"  {i + 1}. {subjects[i]}");
+                Console.Write("Select Subject #: ");
+                if (!int.TryParse(Console.ReadLine(), out int subjectIdx) || subjectIdx < 1 || subjectIdx > subjects.Length)
+                {
+                    Console.WriteLine("Invalid selection. Press any key.");
+                    Console.ReadKey();
+                    return;
+                }
+                strategy = new SubjectSearchStrategy(subjects[subjectIdx - 1]);
+                break;
+            case "3":
+                strategy = new AvailabilitySearchStrategy();
+                break;
+            case "4":
+                searchAll = true;
+                break;
+            default:
+                Console.WriteLine("Invalid option. Press any key.");
+                Console.ReadKey();
+                return;
+        }
+
+        var sessions = (searchAll
+                ? _bookingService.GetAllBookings()
+                : _bookingService.SearchBookings(strategy!))
             .Where(b => b.Status != BookingStatus.Expired)
-            .Where(b => filter == "all" || b.Room.GetType().Name.ToLower() == filter)
             .ToList();
 
         if (sessions.Count == 0)
         {
-            Console.WriteLine("\nNo sessions found. Press any key.");
+            Console.WriteLine("\nNo matching sessions found. Press any key.");
             Console.ReadKey();
             return;
         }
@@ -332,19 +396,16 @@ class Program
             return;
         }
 
-        if (selected.Attendees.Count >= selected.Maximum)
+        try
         {
-            Console.WriteLine("\nThis session is full. Press any key.");
-            Console.ReadKey();
-            return;
+            _bookingService.JoinBooking(selected.BookingId, userEmail);
+            Console.WriteLine($"\nYou have joined \"{selected.Name}\"! Press any key.");
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"\nCould not join session: {e.Message} Press any key.");
         }
 
-        selected.Attendees.Add(userEmail);
-
-        if (selected.Attendees.Count >= selected.Minimum && selected.Status == BookingStatus.Pending)
-            selected.Status = BookingStatus.Confirmed;
-
-        Console.WriteLine($"\nYou have joined \"{selected.Name}\"! Press any key.");
         Console.ReadKey();
     }
 
@@ -365,15 +426,34 @@ class Program
             return;
         }
 
-        foreach (Booking b in mine)
+        for (int i = 0; i < mine.Count; i++)
         {
+            Booking b = mine[i];
             string confirmed = b.Status == BookingStatus.Confirmed ? " [CONFIRMED]" : " [OPEN]";
-            Console.WriteLine($"- \"{b.Name}\" — {b.Room.GetType().Name} @ {b.Room.Location}");
-            Console.WriteLine($"  Subject: {b.Subject} | Attendees: {b.Attendees.Count}/{b.Maximum}{confirmed}");
-            Console.WriteLine($"  Deadline: {b.Deadline:yyyy-MM-dd HH:mm}");
+            Console.WriteLine($"{i + 1}. \"{b.Name}\" — {b.Room.GetType().Name} @ {b.Room.Location}");
+            Console.WriteLine($"   Subject: {b.Subject} | Attendees: {b.Attendees.Count}/{b.Maximum}{confirmed}");
+            Console.WriteLine($"   Deadline: {b.Deadline:yyyy-MM-dd HH:mm}");
         }
 
-        Console.WriteLine("\nPress any key.");
+        Console.Write("\nEnter session # to leave (or 0 to go back): ");
+        if (!int.TryParse(Console.ReadLine(), out int choice) || choice == 0) return;
+        if (choice < 1 || choice > mine.Count)
+        {
+            Console.WriteLine("Invalid selection. Press any key.");
+            Console.ReadKey();
+            return;
+        }
+
+        Booking selected = mine[choice - 1];
+        try
+        {
+            _bookingService.LeaveBooking(selected.BookingId, email);
+            Console.WriteLine($"\nYou have left \"{selected.Name}\". Press any key.");
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"\nCould not leave session: {e.Message} Press any key.");
+        }
         Console.ReadKey();
     }
 
