@@ -1,12 +1,12 @@
 namespace FinalProject.Domain;
 
-public struct Record
+public readonly struct Record
 {
     public int BookingId { get; }
     public string RoomLocation { get; }
-    public BookingStatus Status;
-    public DateTime? ScheduledTime;
-    public DateTime ArchivedTime;
+    public BookingStatus Status { get; }
+    public DateTime? ScheduledTime { get; }
+    public DateTime ArchivedTime { get; }
 
     public Record(Booking booking)
     {

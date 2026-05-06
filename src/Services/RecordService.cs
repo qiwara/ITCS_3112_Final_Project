@@ -19,13 +19,14 @@ public class RecordService : IRecordService
         return _recordRepo.GetAll();
     }
 
-    public List<Record> GetRecordsById(int bookingId)
+    public Record? GetRecordById(int bookingId)
     {
         return _recordRepo.GetByBookingId(bookingId);
     }
 
     public void ArchiveBooking(Booking b)
     {
+        if (_recordRepo.GetByBookingId(b.BookingId).HasValue) return;
         _recordRepo.Add(new Record(b));
         _bookingRepo.Delete(b);
     }

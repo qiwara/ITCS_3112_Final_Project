@@ -18,7 +18,8 @@ public class BookingService : IBookingService
     public Booking CreateBooking(string sessionName, string location, Subject subject, DateTime scheduledTime, string email)
     {
         var room = _roomRepo.GetByLocation(location);
-        if (room == null) throw new Exception("Room location not found.");
+        if (room == null) throw new ArgumentException("Room location not found.");
+        if (room.Booked) throw new InvalidOperationException("Room is already booked.");
         
         var newBooking = new Booking(sessionName, room, subject, scheduledTime);
         newBooking.Attendees.Add(email);
@@ -42,11 +43,13 @@ public class BookingService : IBookingService
     public void JoinBooking(int bookingId, string email)
     {
         var booking = _bookingRepo.GetById(bookingId);
-        if (booking == null) throw new Exception("Booking not found.");
+        if (booking == null) throw new ArgumentException("Booking not found.");
+        if (booking.Status == BookingStatus.Cancelled || booking.Status == BookingStatus.Expired)
+            throw new InvalidOperationException("Cannot join an inactive session.");
         
         string userStr = email;
         if (booking.Attendees.Contains(userStr)) return;
-        if (booking.Attendees.Count >= booking.Maximum) throw new Exception("Session is full.");
+        if (booking.Attendees.Count >= booking.Maximum) throw new InvalidOperationException("Session is full.");
 
         booking.Attendees.Add(userStr);
 
@@ -59,6 +62,9 @@ public class BookingService : IBookingService
     public void LeaveBooking(int bookingId, string email)
     {
         var booking = _bookingRepo.GetById(bookingId);
+        if (booking == null) throw new ArgumentException("Booking not found.");
+        if (booking.Status == BookingStatus.Cancelled || booking.Status == BookingStatus.Expired)
+            throw new InvalidOperationException("Cannot leave an inactive session.");
         
         booking.Attendees.Remove(email);
 

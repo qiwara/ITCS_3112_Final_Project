@@ -10,7 +10,7 @@ public class BookingRepo : IBookingRepo
 
     public List<Booking> GetAll()
     {
-        return _bookings;
+        return new List<Booking>(_bookings);
     }
 
     public void Add(Booking b)

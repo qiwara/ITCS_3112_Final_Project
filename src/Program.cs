@@ -21,6 +21,7 @@ class Program
     {
         SeedRooms();
         SeedBookings();
+        SeedRecords();
 
         while (true)
         {
@@ -81,6 +82,16 @@ class Program
             _bookingService.CreateBooking("Finance Flashcards", "Library - Study Room B", Subject.Finance, DateTime.Now.AddDays(3), "miner@charlotte.edu"));
     }
 
+    static void SeedRecords()
+    {
+        Booking cancelledSeed = _bookingService.CreateBooking("Archived Cancelled Session", "Building C - Room 303", Subject.English, DateTime.Now.AddDays(2), "niner@charlotte.edu");
+        _bookingService.AddBooking(cancelledSeed);
+        cancelledSeed.Status = BookingStatus.Cancelled;
+        cancelledSeed.Room.Booked = false;
+        cancelledSeed.Room.CurrentBooking = null;
+        _recordService.ArchiveBooking(cancelledSeed);
+    }
+
     static void CheckExpiredClassrooms()
     {
         var expired = _bookingService.GetAllBookings()
@@ -94,14 +105,27 @@ class Program
             booking.Status = BookingStatus.Expired;
             booking.Room.Booked = false;
             booking.Room.CurrentBooking = null;
-            _recordService.ArchiveBooking(booking);
             Console.WriteLine($"[System] Session \"{booking.Name}\" cancelled — minimum attendance not met within 2 days.");
         }
+
+        ArchiveInactiveBookings();
 
         if (expired.Count > 0)
         {
             Console.WriteLine("Press any key to continue.");
             Console.ReadKey();
+        }
+    }
+
+    static void ArchiveInactiveBookings()
+    {
+        var inactive = _bookingService.GetAllBookings()
+            .Where(b => b.Status == BookingStatus.Cancelled || b.Status == BookingStatus.Expired)
+            .ToList();
+
+        foreach (var booking in inactive)
+        {
+            _recordService.ArchiveBooking(booking);
         }
     }
 
@@ -166,20 +190,22 @@ class Program
             Console.WriteLine($"=== Admin Menu — {session.CurrentUser.name} ===\n");
             Console.WriteLine("1. Create Session");
             Console.WriteLine("2. Search Sessions");
-            Console.WriteLine("3. Cancel a Session");
-            Console.WriteLine("4. View Rooms");
-            Console.WriteLine("5. Add Room");
-            Console.WriteLine("6. Sign Out");
+            Console.WriteLine("3. Search Records");
+            Console.WriteLine("4. Cancel a Session");
+            Console.WriteLine("5. View Rooms");
+            Console.WriteLine("6. Add Room");
+            Console.WriteLine("7. Sign Out");
             Console.Write("\n> ");
 
             switch (Console.ReadLine()?.Trim())
             {
                 case "1": CreateSession(session.CurrentUser); break;
                 case "2": SearchSessions(session.CurrentUser, canJoin: false); break;
-                case "3": CancelSession(); break;
-                case "4": ViewRooms(); break;
-                case "5": AddRoom(); break;
-                case "6": _loginService.Logout(session); break;
+                case "3": SearchRecords(); break;
+                case "4": CancelSession(); break;
+                case "5": ViewRooms(); break;
+                case "6": AddRoom(); break;
+                case "7": _loginService.Logout(session); break;
                 default:
                     Console.WriteLine("Invalid option. Press any key.");
                     Console.ReadKey();
@@ -489,9 +515,63 @@ class Program
         toCancel.Room.Booked = false;
         toCancel.Room.CurrentBooking = null;
         toCancel.Status = BookingStatus.Cancelled;
-        _recordService.ArchiveBooking(toCancel);
+        ArchiveInactiveBookings();
 
         Console.WriteLine($"\nSession \"{toCancel.Name}\" cancelled. Press any key.");
+        Console.ReadKey();
+    }
+
+    static void SearchRecords()
+    {
+        Console.Clear();
+        Console.WriteLine("=== Search Records ===\n");
+        Console.WriteLine("1. View all records");
+        Console.WriteLine("2. Search by booking ID");
+        Console.Write("\n> ");
+
+        List<Record> records;
+        switch (Console.ReadLine()?.Trim())
+        {
+            case "1":
+                records = _recordService.GetAllRecords();
+                break;
+            case "2":
+                Console.Write("Enter booking ID: ");
+                if (!int.TryParse(Console.ReadLine(), out int bookingId))
+                {
+                    Console.WriteLine("Invalid booking ID. Press any key.");
+                    Console.ReadKey();
+                    return;
+                }
+                Record? record = _recordService.GetRecordById(bookingId);
+                records = record.HasValue ? [record.Value] : [];
+                break;
+            default:
+                Console.WriteLine("Invalid option. Press any key.");
+                Console.ReadKey();
+                return;
+        }
+
+        if (records.Count == 0)
+        {
+            Console.WriteLine("\nNo records found. Press any key.");
+            Console.ReadKey();
+            return;
+        }
+
+        Console.WriteLine();
+        foreach (var record in records)
+        {
+            string scheduled = record.ScheduledTime?.ToString("yyyy-MM-dd HH:mm") ?? "N/A";
+            Console.WriteLine($"Booking ID: {record.BookingId}");
+            Console.WriteLine($"  Room: {record.RoomLocation}");
+            Console.WriteLine($"  Status: {record.Status}");
+            Console.WriteLine($"  Scheduled: {scheduled}");
+            Console.WriteLine($"  Archived: {record.ArchivedTime:yyyy-MM-dd HH:mm}");
+            Console.WriteLine();
+        }
+
+        Console.WriteLine("Press any key.");
         Console.ReadKey();
     }
 

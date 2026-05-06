@@ -12,9 +12,12 @@ public class RecordRepo : IRecordRepo
         return new List<Record>(_records);
     }
 
-    public List<Record> GetByBookingId(int bookingId)
+    public Record? GetByBookingId(int bookingId)
     {
-        return _records.Where(r => r.BookingId == bookingId).ToList();
+        return _records
+            .Where(r => r.BookingId == bookingId)
+            .Select(r => (Record?)r)
+            .FirstOrDefault();
     }
 
     public void Add(Record r)
