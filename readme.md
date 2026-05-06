@@ -20,7 +20,7 @@
 
 **Struct** — [Record](./src/Domain/Record.cs) is a type (`struct`) holding `BookingId`, `UserId`, and `TimeStamp`.
 
-**Enum** — [BookingStatus](./src/Domain/BookingStatus.cs): `Available`, `Booked`, `Incomplete`.
+**Enum** — [BookingStatus](./src/Domain/BookingStatus.cs): `Confirmed`, `Pending`, `Expired`, `Cancelled`.
 
 **Data Structures**\
 `List<Room>` in [RoomRepo](./src/Repositories/RoomRepo.cs) line 8;\
@@ -34,6 +34,10 @@
 ### Factory Method — Creational
 **File:** [src/Domain/RoomFactory.cs](./src/Domain/RoomFactory.cs)\
 **Rationale:** The application needs to create `Room` subclass instances based on user input (a string like `"classroom"`, `"lab"`, or `"studyroom"`). Without a factory, `Program.cs` would need a switch statement coupled to every concrete type. `RoomFactory.CreateRoom()` centralizes that logic — adding a new room type only requires changing the factory, not the UI code.
+
+### Strategy Pattern — Behavioral
+**File:** [src/Services/SearchStrategies/](./src/Services/SearchStrategies/)\
+**Rationale:** The BookingService needs to support multiple ways to find sessions (by Room, by Subject, or by Availability). Hard-coding these filters into the service would create a "Fat Service" with many similar methods. By using the Strategy Pattern, we encapsulate each search algorithm in its own class.
 
 ---
 
