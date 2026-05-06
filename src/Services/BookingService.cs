@@ -19,12 +19,13 @@ public class BookingService : IBookingService
     {
         var room = _roomRepo.GetByLocation(location);
         if (room == null) throw new Exception("Room location not found.");
-
-        var newBooking = new Booking(sessionName, room, subject, scheduledTime);
         
+        var newBooking = new Booking(sessionName, room, subject, scheduledTime);
         newBooking.Attendees.Add(email);
 
-        _bookingRepo.Add(newBooking);
+        room.Booked = true;
+        room.CurrentBooking = newBooking;
+        
         return newBooking;
     }
     

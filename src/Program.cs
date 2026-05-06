@@ -55,30 +55,29 @@ class Program
     {
         _roomRepo.AddRoom(new Classroom("Building A - Room 101", 30) { NumberOfWhiteBoards = 2 });
         _roomRepo.AddRoom(new Classroom("Building B - Room 202", 20) { NumberOfWhiteBoards = 1 });
+        _roomRepo.AddRoom(new Classroom("Building C - Room 303", 20) { NumberOfWhiteBoards = 1} );
         _roomRepo.AddRoom(new Lab("Science Block - Lab 1", 24) { Equipments = "Microscopes, Bunsen Burners" });
         _roomRepo.AddRoom(new Lab("Tech Block - Lab 2", 20) { Equipments = "Computers, Soldering Kits" });
+        _roomRepo.AddRoom(new Lab("Media Block - Lab 3", 20) { Equipments = "Camera, Microphone" });
         _roomRepo.AddRoom(new StudyRoom("Library - Study Room A", 8));
         _roomRepo.AddRoom(new StudyRoom("Library - Study Room B", 6));
+        _roomRepo.AddRoom(new StudyRoom("Library - Study Room C", 8));
     }
 
     static void SeedBookings()
     {
-        var rooms = _roomRepo.GetAll();
-        Room classroomA = rooms[0]; // Building A - Room 101
-        Room classroomB = rooms[1]; // Building B - Room 202
-        Room lab1       = rooms[2]; // Science Block - Lab 1
-        Room lab2       = rooms[3]; // Tech Block - Lab 2
-        Room studyA     = rooms[4]; // Library - Study Room A
-        Room studyB     = rooms[5]; // Library - Study Room B
-
-        void Book(Room r, Booking b) { r.Booked = true; r.CurrentBooking = b; _bookingService.AddBooking(b); }
-
-        Book(classroomA, new Booking("Calc Study Group",     classroomA, Subject.Mathematics,    DateTime.Now.AddDays(4)));
-        Book(classroomB, new Booking("History Review",       classroomB, Subject.History,        DateTime.Now.AddDays(4)));
-        Book(lab1,       new Booking("Bio Lab Practicals",   lab1,       Subject.Biology,        DateTime.Now.AddDays(4)));
-        Book(lab2,       new Booking("CS Circuits Workshop", lab2,       Subject.ComputerScience,DateTime.Now.AddDays(4)));
-        Book(studyA,     new Booking("Essay Peer Review",    studyA,     Subject.English,        DateTime.Now.AddDays(4)));
-        Book(studyB,     new Booking("Finance Flashcards",   studyB,     Subject.Finance,        DateTime.Now.AddDays(3)));
+        _bookingService.AddBooking(
+            _bookingService.CreateBooking("Calc Study Group", "Building A - Room 101", Subject.Mathematics, DateTime.Now.AddDays(4), "niner@charlotte.edu"));
+        _bookingService.AddBooking(
+            _bookingService.CreateBooking("History Review", "Building B - Room 202", Subject.History, DateTime.Now.AddDays(5), "miner@charlotte.edu"));
+        _bookingService.AddBooking(
+            _bookingService.CreateBooking("Bio Lab Practicals", "Science Block - Lab 1", Subject.Biology, DateTime.Now.AddDays(6), "charlot2@charlotte.edu"));
+        _bookingService.AddBooking(
+            _bookingService.CreateBooking("CS Circuits Workshop", "Tech Block - Lab 2", Subject.ComputerScience, DateTime.Now.AddDays(7), "niner@charlotte.edu"));
+        _bookingService.AddBooking(
+            _bookingService.CreateBooking("Essay Peer Review", "Library - Study Room A", Subject.English, DateTime.Now.AddDays(3), "norm@charlotte.edu"));
+        _bookingService.AddBooking(
+            _bookingService.CreateBooking("Finance Flashcards", "Library - Study Room B", Subject.Finance, DateTime.Now.AddDays(3), "miner@charlotte.edu"));
     }
 
     static void CheckExpiredClassrooms()
@@ -220,7 +219,7 @@ class Program
         Console.Clear();
         Console.WriteLine("=== Create Session ===\n");
         Console.Write("Session Name: ");
-        string name = Console.ReadLine()?.Trim() ?? "Unnamed Session";
+        string sessionName = Console.ReadLine()?.Trim() ?? "Unnamed Session";
 
         Console.Write("Room Type (classroom/lab/studyroom): ");
         string roomType = Console.ReadLine()?.Trim().ToLower() ?? "";
@@ -265,24 +264,14 @@ class Program
         }
         Subject subject = subjects[subjectIdx - 1];
 
-        Console.Write("Minimum Attendees: ");
-        int.TryParse(Console.ReadLine(), out int min);
-        Console.Write("Maximum Attendees: ");
-        int.TryParse(Console.ReadLine(), out int max);
-        if (max < min) max = min;
-        if (max > room.Capacity) max = room.Capacity;
-
-        Console.Write("Session deadline (days from now): ");
+        Console.Write("Session Time (days from now): ");
         int.TryParse(Console.ReadLine(), out int days);
-        DateTime deadline = DateTime.Now.AddDays(days > 0 ? days : 7);
+        DateTime bookingTime = DateTime.Now.AddDays(days > 0 ? days : 7);
+        
+        _bookingService.AddBooking(_bookingService.CreateBooking(
+            sessionName, room.Location, subject, bookingTime, creator.getEmail()));
 
-        var booking = new Booking(name, room, subject, DateTime.Now);
-
-        room.Booked = true;
-        room.CurrentBooking = booking;
-        _bookingService.AddBooking(booking);
-
-        Console.WriteLine($"\nSession \"{name}\" created successfully! Press any key.");
+        Console.WriteLine($"\nSession \"{sessionName}\" created successfully! Press any key.");
         Console.ReadKey();
     }
 
