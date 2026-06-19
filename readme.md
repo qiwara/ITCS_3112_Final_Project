@@ -1,5 +1,6 @@
-# Room Booking System
+# Study Room Booking Management System
 
+A console-based room booking application built on object-oriented principles. Users (students and admins) can log in, browse available rooms, and create or cancel bookings. The system is structured around clean separation of concerns using interfaces, abstract base classes, and the repository pattern.
 ---
 
 ## Requirements Checklist
